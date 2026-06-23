@@ -1,117 +1,137 @@
-[Google News Scraper](https://apify.com/scrape.badger/google-news-scraper?fpr=data)
+[Google News Scraper](https://apify.com/taroyamada/google-news-scraper?fpr=data)
 
-## What does Google News Scraper do?
+# 📰 Google News Scraper
 
-Scrape [Google News](https://news.google.com) at scale — keyword search, topic feeds (world, business, tech, sports, …), and country-level Top Stories trending feeds.
+Discover fresh article URLs from Google News RSS for topic monitoring, PR workflows, and content-intelligence pipelines. This actor is a **discovery surface** in the Content Intelligence Pack: use it to find news URLs, then hand those URLs to **Article Content Extractor** for full-body cleanup.
 
-## Why use Google News Scraper?
+## Store Quickstart
 
-- **Three modes.** Search (keyword), Topic Feed (7 predefined), Trending (country Top Stories).
-- **Country + language targeting.** `gl` + `hl` for localised news editions.
-- **Each article as its own record.** Stream-friendly — one article per dataset row with source, publish date, link, snippet.
-- **No duplicates.** Pagination dedupes across pages automatically.
-- **Fast.** Lightweight JSON responses, ≈ 1s per call.
+- Start with **Quickstart (company news)** for a reliable first run.
+- Use **Brand Monitoring** to track multiple companies or themes.
+- Use **Google News → Article Cleanup** when your next step is article extraction.
 
-## What data can Google News Scraper extract?
+## Where this actor fits
 
-| Field | Type | Description |
-| --- | --- | --- |
-| title | string | Article headline |
-| source | string | Publisher name |
-| published_at | string | ISO 8601 timestamp |
-| link | string | Canonical article URL |
-| snippet | string | Lead paragraph preview |
-| thumbnail | string | Article image (when present) |
-| topic | string | Google topic ID (in Topic Feed mode) |
+| Surface | Best for |
+| --- | --- |
+| **Google News Scraper** | Discover current article URLs by query |
+| **Article Content Extractor** | Clean the discovered article/news/blog pages |
+| **Website Content Extractor** | Clean discovered non-article pages |
+| **RSS Feed Aggregator** | Discover fresh URLs from known publishers and blogs |
 
-## How to scrape Google News
+## Key Features
 
-1. Click **Try for free**.
-2. Pick a `mode`: Search, Topic Feed, or Trending.
-3. For Search: enter `q`. For Topic Feed: pick a topic (WORLD / BUSINESS / TECHNOLOGY / …). For Trending: just set country.
-4. Set `gl` and `hl` for the local edition.
-5. Click **Start** — articles stream into the dataset.
+- 🔎 **Query-based discovery** — Pull article URLs from Google News RSS without a paid API
+- 🌍 **Localized results** — Tune by `language` and `country`
+- 🔄 **Deduplication** — Remove duplicate URLs across multiple queries
+- 📰 **Publisher context** — Keep headline, source, description, and publish date
+- ⚡ **Fast feeder step** — Lightweight discovery before deeper extraction
 
-## How much will it cost?
+## Use Cases
 
-**$0.002 per page (≈ $2 per 1,000 pages).** One call per page; each page returns ≈ 50-100 articles depending on mode. A typical 3-page Search run pushes ~200 articles for $0.006.
-
-### Competitor benchmark
-
-| Actor | Author | Price | Notes |
-| --- | --- | --- | --- |
-| lhotanova/google-news-scraper | lhotanova | ~$4 / 1k articles | Search-only |
-| easyapi/google-news-api-scraper | easyapi | ~$3 / 1k articles | Search-only |
-| apify/google-search-scraper | Apify | ~$3.50 / 1k pages | News as SERP block |
-| **scrape-badger/google-news-scraper** | **ScrapeBadger** | **$2 / 1k pages** | **Search + Topics + Trending in one** |
+| Who | Why |
+| --- | --- |
+| PR teams | Find the latest media mentions to hand off for cleanup |
+| Competitive intelligence | Build newsroom watchlists from search queries |
+| Content ops | Discover trending stories before enrichment |
+| AI / RAG teams | Create a steady article URL feed for downstream extraction |
 
 ## Input
 
-Configure the run in the **Input** tab above, or pass a JSON object matching the fields below when calling the Actor via the Apify API.
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `queries` | `string[]` | required | Search queries (max 50) |
+| `language` | `string` | `en` | Google News language code |
+| `country` | `string` | `US` | Google News country code |
+| `maxItems` | `integer` | `25` | Max articles per query |
+| `deduplicate` | `boolean` | `true` | Remove duplicate links across queries |
+| `timeoutMs` | `integer` | `15000` | Request timeout |
+| `delivery` | `string` | `dataset` | `dataset` or `webhook` |
+| `webhookUrl` | `string` | — | Webhook target when `delivery=webhook` |
+| `dryRun` | `boolean` | `false` | Run without saving |
 
-| Field | Required | Description |
-| --- | --- | --- |
-| mode | ✅ | `Search` / `Topic Feed` / `Trending`. |
-| q | Search only | Search query. |
-| topic | Topic Feed only | WORLD / BUSINESS / TECHNOLOGY / ENTERTAINMENT / SPORTS / SCIENCE / HEALTH. |
-| gl / hl | — | Country + language. |
-| max_results | — | Result cap across the full paginated run. |
-
-## Output
-
-Every successful run streams records into the run's dataset. Download as JSON, CSV, XML, Excel, or HTML from the **Dataset** tab; consume programmatically via the Apify API or webhooks.
-
-Example record:
+### Input Example
 
 ```
 {
-  "title": "Major breakthrough in quantum computing",
-  "source": "TechCrunch",
-  "published_at": "2026-04-22T09:30:00Z",
-  "link": "https://techcrunch.com/\u2026",
-  "snippet": "Researchers at MIT announced today\u2026",
-  "thumbnail": "https://news.google.com/\u2026"
+  "queries": ["OpenAI", "Google AI"],
+  "language": "en",
+  "country": "US",
+  "maxItems": 20,
+  "deduplicate": true
 }
 ```
 
-## Tips / Advanced options
+## Output
 
-- **Use Topic Feed for broad monitoring.** Cron a daily Topic Feed run for Technology / Business — covers the full industry automatically.
-- **Use Trending for viral stories.** Top Stories per country, refreshed every hour by Google.
-- **Pair with entity-extraction.** Pipe the `snippet` field through an LLM or NER service to tag companies, people, and topics.
-- **Deduplicate by `link`.** The canonical URL is stable across runs — use it as the primary key in your downstream DB.
+| Field | Type | Description |
+| --- | --- | --- |
+| `title` | string | Article headline |
+| `link` | string | Direct article URL for downstream cleanup |
+| `source` | string | Publisher name |
+| `pubDate` | string | Original RSS publish date |
+| `pubDateISO` | string | ISO timestamp version of `pubDate` |
+| `description` | string | Short Google News snippet |
+| `query` | string | Search query that surfaced the row |
 
-## FAQ, Disclaimers, Support
+### Output Example
 
-### Can I filter by date range?
+```
+{
+  "title": "Codex for (almost) everything",
+  "link": "https://openai.com/index/codex-for-almost-everything",
+  "source": "OpenAI",
+  "pubDate": "Thu, 16 Apr 2026 10:00:00 GMT",
+  "pubDateISO": "2026-04-16T10:00:00.000Z",
+  "description": "The updated Codex app for macOS and Windows adds computer use...",
+  "query": "OpenAI"
+}
+```
 
-Search mode accepts Google's `tbs=qdr:d` (24h) / `qdr:w` (week) via the SDK. Topic Feed and Trending are always current.
+## First-run buyer experience
 
-### What's the article body?
+1. Run **Quickstart (company news)**.
+2. Confirm the dataset shows real article URLs, not generic homepages.
+3. Pick the top URLs and send them to **Article Content Extractor**.
+4. If a discovered URL is actually a docs/product/policy page, clean it with **Website Content Extractor** instead.
 
-Google News only returns title, snippet, and link. Fetch the full body from `link` via a separate HTTP call (or use `google-scraper` for the full SERP).
+## Tips & Limitations
 
-### How many articles per page?
+- Use broad queries for the first run; refine later.
+- RSS is a discovery layer only — it does not return full article bodies.
+- Combine multiple narrower queries instead of one overloaded boolean query when relevance matters.
 
-≈ 50-100 depending on mode — `Topic Feed` typically returns more than `Search`.
+## FAQ
 
-### Can I bypass paywalls?
+**Can I get full article text here?**
 
-No — `link` resolves to the publisher's canonical URL. Paywalls apply to the actual article, not to Google News metadata.
+No. This actor discovers URLs and returns metadata only. Use Article Content Extractor for full content.
 
-### Disclaimer
+**Why use this instead of scraping the Google News UI?**
 
-This Actor scrapes public Google data only. You're responsible for compliance with Google's Terms of Service and any applicable data-protection laws (GDPR, CCPA, etc.) in your jurisdiction. ScrapeBadger does not store the scraped results — they are delivered directly to your Apify dataset.
+The RSS surface is lighter, more stable, and better suited for recurring discovery runs.
 
-### Support
+**Can I schedule recurring news monitoring?**
 
-Something not working? Open a ticket in the **Issues** tab above — we triage within one business day. Full API reference: [docs.scrapebadger.com](https://docs.scrapebadger.com).
+Yes — run it on a schedule, then pass the discovered URLs into an article-cleanup step.
 
-### Related Actors
+## Related Actors
 
-- [`google-search-scraper`](https://apify.com/scrape-badger/google-search-scraper) — SERP with inline News block
-- [`google-trends-scraper`](https://apify.com/scrape-badger/google-trends-scraper) — Search-interest trend data
+Content Intelligence Pack handoffs:
 
-### Powered by
+- [📰 Article Content Extractor](https://apify.com/taroyamada/article-content-extractor) — clean newsroom and blog article pages
+- [📄 Website Content Extractor](https://apify.com/taroyamada/website-content-extractor) — clean discovered non-article pages
+- [📡 RSS Feed Aggregator](https://apify.com/taroyamada/rss-feed-aggregator) — discover fresh URLs from known publisher feeds
 
-[ScrapeBadger](https://scrapebadger.com) — Google-optimised residential proxy pool + browser-farm fallback, 99.7% uptime, unmetered bandwidth. No CAPTCHAs reach you.
+## Cost
+
+**Pay Per Event**:
+
+- `actor-start`: $0.01
+- `dataset-item`: $0.003 per output item
+
+ 
+
+## ⭐ Was this helpful?
+
+If this actor saved you time, please [leave a ★ rating](https://apify.com/taroyamada/google-news-scraper/reviews) on Apify Store.
