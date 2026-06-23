@@ -1,274 +1,117 @@
-[Google News Scraper](https://apify.com/epicscrapers/google-news-scraper?fpr=data)
-
-# Google News Scraper
-
-Gets featured articles from Google News with title, link, source, publication date and image.
+[Google News Scraper](https://apify.com/scrape.badger/google-news-scraper?fpr=data)
 
 ## What does Google News Scraper do?
 
-**Google News Scraper** is a powerful tool that queries the Google News RSS API to collect news article metadata—headlines, article URLs, publisher/source, publication timestamps, and preview image URLs. It can optionally fetch full article pages to decode final links and extract images.
-
-This Actor is perfect for:
-
-- **News aggregation** - Collect articles from multiple sources on specific topics
-- **Media monitoring** - Track mentions of your brand, competitors, or industry keywords
-- **Market research** - Analyze news trends and sentiment over time
-- **Content curation** - Gather articles for newsletters or content platforms
-- **Academic research** - Collect news data for analysis and studies
-
-Unlike manually browsing Google News (which limits you to ~100 results per search), this Actor can retrieve significantly more results by automatically iterating through date ranges day by day.
+Scrape [Google News](https://news.google.com) at scale — keyword search, topic feeds (world, business, tech, sports, …), and country-level Top Stories trending feeds.
 
 ## Why use Google News Scraper?
 
-- **Bypass result limits** - Get more than the standard 100 results per search
-- **Advanced search operators** - Use `intitle`, `inurl`, `site`, exact match, exclusions, and boolean operators
-- **Date range filtering** - Search specific time windows or open-ended ranges (last hour, day, week, year)
-- **Topic-based search** - Scrape predefined topics or use hashed topic IDs for specific sections
-- **Multilingual support** - Search in 50+ languages and regions
-- **Cost-effective** - Uses RSS API instead of browser automation for faster, cheaper runs
-- **Flexible output** - Get simple RSS links or enriched data with decoded URLs and images
+- **Three modes.** Search (keyword), Topic Feed (7 predefined), Trending (country Top Stories).
+- **Country + language targeting.** `gl` + `hl` for localised news editions.
+- **Each article as its own record.** Stream-friendly — one article per dataset row with source, publish date, link, snippet.
+- **No duplicates.** Pagination dedupes across pages automatically.
+- **Fast.** Lightweight JSON responses, ≈ 1s per call.
 
-## How to use Google News Scraper
-
-### 1. Query-based search
-
-Enter a search query as you would in Google News. You can use advanced operators:
-
-| Operator | Example | Description |
-| --- | --- | --- |
-| `intitle:` | `intitle:"AI"` | Find articles with keyword in title |
-| `site:` | `site:bbc.com` | Search within specific site |
-| `""` | `"climate change"` | Exact phrase match |
-| `-` | `apple -fruit` | Exclude term |
-| `AND` / `OR` | `AI AND (ethics OR regulation)` | Boolean operators |
-
-**Example queries:**
-
-- `intitle:"AI" AND site:forbes.com` - AI articles from Forbes
-- `site:reuters.com "stock market" -crypto` - Stock market news excluding crypto
-- `"Samsung Galaxy S25" AND (review OR comparison)` - Reviews or comparisons
-
-### 2. Topic-based search
-
-Select predefined topics or use hashed topic IDs:
-
-**Predefined topics:**
-
-- WORLD 🌎, NATION 🚩, BUSINESS 🪙, TECHNOLOGY 💻, ENTERTAINMENT 🎸, SPORTS 🏒, SCIENCE 🧪, HEALTH 🧑‍⚕️
-
-**Hashed topics:**
-Copy topic IDs from Google News URLs for custom topics. Example:
-
-```
-CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB/sections/CAQiQ0NCQVNMQW9JTDIwdk1EZGpNWFlTQW1WdUdnSlZVeUlOQ0FRYUNRb0hMMjB2TUcxcmVpb0pFZ2N2YlM4d2JXdDZLQUEqKggAKiYICiIgQ0JBU0Vnb0lMMjB2TURkak1YWVNBbVZ1R2dKVlV5Z0FQAVAB
-```
-
-This targets "Technology > Artificial Intelligence" section.
-
-### 3. Configure date range
-
-**Option A: Fixed dates**
-
-- `Date from`: 2024-01-01
-- `Date to`: 2024-01-31
-
-**Option B: Open-ended range**
-
-- `1h` - Last hour
-- `24h` - Last 24 hours
-- `7d` - Last week
-- `30d` - Last month
-- `1y` - Last year
-
-### 4. Set language and region
-
-Choose from 50+ options like:
-
-- `US:en` - United States (English)
-- `GB:en` - United Kingdom (English)
-- `DE:de` - Germany (German)
-- `FR:fr` - France (French)
-- `JP:ja` - Japan (Japanese)
-
-### 5. Choose output detail level
-
-**Fetch article details: ON**
-
-- Decodes RSS links to actual article URLs
-- Extracts preview images from article pages
-- Slower but more informative
-
-**Fetch article details: OFF**
-
-- Returns RSS feed links only
-- Much faster and cheaper
-- No images, encoded URLs
-
-## Input
-
-| Field | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `query` | string | No | - | Search query with optional advanced operators |
-| `topics` | array | No | [] | Predefined topics (WORLD, NATION, BUSINESS, etc.) |
-| `topicsHashed` | array | No | [] | Hashed topic IDs from Google News URLs |
-| `language` | string | Yes | US:en | Language and region pair |
-| `maxItems` | integer | No | - | Maximum number of items to scrape |
-| `fetchArticleDetails` | boolean | No | true | Decode RSS links and fetch images |
-| `dateFrom` | string | No | - | Start date (YYYY-MM-DD) |
-| `dateTo` | string | No | - | End date (YYYY-MM-DD) |
-| `openEndedDateRange` | string | No | - | Open-ended range (e.g., 1h, 7d, 1y) |
-| `proxyConfiguration` | object | No | `{useApifyProxy: true}` | Proxy settings |
-
-### Example Input (JSON)
-
-```
-{
-  "query": "intitle:\"artificial intelligence\" AND site:techcrunch.com",
-  "language": "US:en",
-  "maxItems": 50,
-  "fetchArticleDetails": true,
-  "openEndedDateRange": "7d",
-  "proxyConfiguration": {
-    "useApifyProxy": true
-  }
-}
-```
-
-## Output
-
-The Actor stores results in a dataset. You can download data in JSON, HTML, CSV, or Excel formats.
-
-### Output Schema
-
-```
-{
-  "title": "Article headline",
-  "link": "Direct article URL (decoded if fetchArticleDetails=true)",
-  "guid": "Unique article identifier",
-  "source": "Publisher name (e.g., 'BBC News')",
-  "sourceUrl": "Publisher website URL",
-  "publishedAt": "2024-01-15T14:30:00.000Z",
-  "loadedUrl": "Final URL after redirects",
-  "rssLink": "Original RSS feed link",
-  "image": "Preview image URL (if available)"
-}
-```
-
-### Example Output
-
-```
-[
-  {
-    "title": "Web Scraping Optimization: Tips for Faster, Smarter Scrapers",
-    "link": "https://hackernoon.com/web-scraping-optimization-tips-for-faster-smarter-scrapers",
-    "guid": "CBMiiAFBVV95cUxQUXh5WVZ2RkNpNG9ndjF6V3hMRHBRTGRSVnNkelpwZDY2TWJzejBSMGZrRC1rSm5DZ1BxanpoeFFGdDRjWGpZR0tOUG9FY0kyeWFXOE9MSzBobTg1ajRiZzVhSWhtbm5nSVNJVWExSDBSaEFjUUJkT1JRRDJHSDBrMU9jU2ZZN3RN",
-    "source": "hackernoon.com",
-    "sourceUrl": "https://hackernoon.com",
-    "publishedAt": "2024-11-15T08:00:00.000Z",
-    "loadedUrl": "https://hackernoon.com/web-scraping-optimization-tips-for-faster-smarter-scrapers",
-    "rssLink": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQUXh5WVZ2RkNpNG9ndjF6V3hMRHBRTGRSVnNkelpwZDY2TWJzejBSMGZrRC1rSm5DZ1BxanpoeFFGdDRjWGpZR0tOUG9FY0kyeWFXOE9MSzBobTg1ajRiZzVhSWhtbm5nSVNJVWExSDBSaEFjUUJkT1JRRDJHSDBrMU9jU2ZZN3RN?oc=5",
-    "image": "https://hackernoon.imgix.net/images/0FC9YtxD4fbD3T7mPipOt4HSxY42-7y034nb.png"
-  }
-]
-```
-
-## Data table
+## What data can Google News Scraper extract?
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `title` | string | Article headline |
-| `link` | string | Direct article URL |
-| `guid` | string | Unique article identifier from RSS |
-| `source` | string | News publisher name |
-| `sourceUrl` | string | Publisher's website URL |
-| `publishedAt` | string (ISO 8601) | Publication timestamp |
-| `loadedUrl` | string | Final URL after following redirects |
-| `rssLink` | string | Original Google News RSS link |
-| `image` | string | Preview image URL (if fetched) |
+| title | string | Article headline |
+| source | string | Publisher name |
+| published_at | string | ISO 8601 timestamp |
+| link | string | Canonical article URL |
+| snippet | string | Lead paragraph preview |
+| thumbnail | string | Article image (when present) |
+| topic | string | Google topic ID (in Topic Feed mode) |
 
-## Pricing
+## How to scrape Google News
 
-This Actor is priced at **$20/month** with a **7-day free trial** (10,080 minutes).
+1. Click **Try for free**.
+2. Pick a `mode`: Search, Topic Feed, or Trending.
+3. For Search: enter `q`. For Topic Feed: pick a topic (WORLD / BUSINESS / TECHNOLOGY / …). For Trending: just set country.
+4. Set `gl` and `hl` for the local edition.
+5. Click **Start** — articles stream into the dataset.
 
-**Cost estimation:**
+## How much will it cost?
 
-| Scenario | Articles | With Article Details | Est. Cost |
+**$0.002 per page (≈ $2 per 1,000 pages).** One call per page; each page returns ≈ 50-100 articles depending on mode. A typical 3-page Search run pushes ~200 articles for $0.006.
+
+### Competitor benchmark
+
+| Actor | Author | Price | Notes |
 | --- | --- | --- | --- |
-| Quick search | 100 | No | ~$0.01 |
-| Medium search | 500 | Yes | ~$0.05-0.10 |
-| Large search | 2000 | Yes | ~$0.20-0.40 |
+| lhotanova/google-news-scraper | lhotanova | ~$4 / 1k articles | Search-only |
+| easyapi/google-news-api-scraper | easyapi | ~$3 / 1k articles | Search-only |
+| apify/google-search-scraper | Apify | ~$3.50 / 1k pages | News as SERP block |
+| **scrape-badger/google-news-scraper** | **ScrapeBadger** | **$2 / 1k pages** | **Search + Topics + Trending in one** |
 
-*Note: Costs include Apify platform usage (compute units, proxy). Actual costs vary based on proxy type and run duration.*
+## Input
 
-**Tips to reduce costs:**
+Configure the run in the **Input** tab above, or pass a JSON object matching the fields below when calling the Actor via the Apify API.
 
-1. Set `fetchArticleDetails` to `false` if you only need RSS links (~10x faster)
-2. Use `maxItems` to limit results
-3. Use shorter date ranges for focused searches
-4. Use the FREE plan's monthly credits for small runs
+| Field | Required | Description |
+| --- | --- | --- |
+| mode | ✅ | `Search` / `Topic Feed` / `Trending`. |
+| q | Search only | Search query. |
+| topic | Topic Feed only | WORLD / BUSINESS / TECHNOLOGY / ENTERTAINMENT / SPORTS / SCIENCE / HEALTH. |
+| gl / hl | — | Country + language. |
+| max_results | — | Result cap across the full paginated run. |
 
-## Advanced Tips
+## Output
 
-### Combining search methods
+Every successful run streams records into the run's dataset. Download as JSON, CSV, XML, Excel, or HTML from the **Dataset** tab; consume programmatically via the Apify API or webhooks.
 
-You can combine `query`, `topics`, and `topicsHashed` in a single run. The Actor will search each independently and merge results.
+Example record:
 
-### Finding hashed topic IDs
+```
+{
+  "title": "Major breakthrough in quantum computing",
+  "source": "TechCrunch",
+  "published_at": "2026-04-22T09:30:00Z",
+  "link": "https://techcrunch.com/\u2026",
+  "snippet": "Researchers at MIT announced today\u2026",
+  "thumbnail": "https://news.google.com/\u2026"
+}
+```
 
-1. Go to [Google News](https://news.google.com)
-2. Navigate to a topic or section
-3. Copy the ID from the URL after `/topics/`
-4. For sections, include the `/sections/` part too
+## Tips / Advanced options
 
-### Handling large result sets
+- **Use Topic Feed for broad monitoring.** Cron a daily Topic Feed run for Technology / Business — covers the full industry automatically.
+- **Use Trending for viral stories.** Top Stories per country, refreshed every hour by Google.
+- **Pair with entity-extraction.** Pipe the `snippet` field through an LLM or NER service to tag companies, people, and topics.
+- **Deduplicate by `link`.** The canonical URL is stable across runs — use it as the primary key in your downstream DB.
 
-If you need thousands of articles:
+## FAQ, Disclaimers, Support
 
-1. Set `maxItems` to your desired count
-2. The Actor automatically iterates day-by-day when maxItems > 100
-3. Use broader date ranges for historical data
-4. Consider running multiple Actors with different queries in parallel
+### Can I filter by date range?
 
-### Language/region tricks
+Search mode accepts Google's `tbs=qdr:d` (24h) / `qdr:w` (week) via the SDK. Topic Feed and Trending are always current.
 
-Get different perspectives on the same topic:
+### What's the article body?
 
-- Search US news in German: `language: DE:de` + US topic hash
-- Search international news about Japan in English: `language: US:en` + Japan topic hash
+Google News only returns title, snippet, and link. Fetch the full body from `link` via a separate HTTP call (or use `google-scraper` for the full SERP).
 
-## FAQ and Support
+### How many articles per page?
 
-**Is scraping Google News legal?**
-This Actor uses the public Google News RSS API, which is designed for syndication. However, you should:
+≈ 50-100 depending on mode — `Topic Feed` typically returns more than `Search`.
 
-- Respect robots.txt and terms of service
-- Not overwhelm the service with excessive requests
-- Use extracted data in compliance with copyright laws
-- Consider data privacy regulations (GDPR, CCPA) when storing/processing data
+### Can I bypass paywalls?
 
-**Why are some images missing?**
-Images are extracted from article pages using Open Graph and Twitter Card metadata. Not all websites provide this data. The image URL comes directly from the publisher's site, not Google News.
+No — `link` resolves to the publisher's canonical URL. Paywalls apply to the actual article, not to Google News metadata.
 
-**Can I get full article text?**
-This Actor extracts metadata only. For full article text, use the extracted `link` field with a dedicated article scraper like [Smart Article Extractor](https://apify.com/lukaskrivka/article-extractor-smart).
+### Disclaimer
 
-**What if I get blocked?**
-The Actor uses Apify Proxy by default. If you experience issues:
+This Actor scrapes public Google data only. You're responsible for compliance with Google's Terms of Service and any applicable data-protection laws (GDPR, CCPA, etc.) in your jurisdiction. ScrapeBadger does not store the scraped results — they are delivered directly to your Apify dataset.
 
-1. Check your proxy settings
-2. Reduce concurrency (built-in default is conservative)
-3. Use shorter date ranges
-4. Enable `fetchArticleDetails` only when needed
+### Support
 
-**Need help?**
+Something not working? Open a ticket in the **Issues** tab above — we triage within one business day. Full API reference: [docs.scrapebadger.com](https://docs.scrapebadger.com).
 
-- Report issues via the [Issues tab](https://console.apify.com/actors/YOUR-ACTOR-ID/issues)
-- Join [Apify Discord](https://discord.com/invite/jyEM2PRvMU) for community support
-- Contact [Apify Support](https://support.apify.com) for platform issues
+### Related Actors
 
-## Resources
+- [`google-search-scraper`](https://apify.com/scrape-badger/google-search-scraper) — SERP with inline News block
+- [`google-trends-scraper`](https://apify.com/scrape-badger/google-trends-scraper) — Search-interest trend data
 
-- [Apify SDK for JavaScript documentation](https://docs.apify.com/sdk/js)
-- [Crawlee documentation](https://crawlee.dev/)
-- [Google Search Operators Guide](https://www.googleguide.com/advanced_operators_reference.html)
-- [Apify Proxy documentation](https://docs.apify.com/platform/proxy)
+### Powered by
+
+[ScrapeBadger](https://scrapebadger.com) — Google-optimised residential proxy pool + browser-farm fallback, 99.7% uptime, unmetered bandwidth. No CAPTCHAs reach you.
